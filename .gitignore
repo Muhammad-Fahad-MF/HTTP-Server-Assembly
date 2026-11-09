@@ -1,0 +1,41 @@
+# Visual Studio temporary files and caches
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build and Output Directories
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]rm/
+[Aa]rm64/
+build/
+bin/
+obj/
+
+# Visual C++ / MASM build outputs and intermediate files
+*.obj
+*.exe
+*.dll
+*.lib
+*.exp
+*.pdb
+*.ilk
+*.idb
+*.tlog
+*.lastbuildstate
+*.log
+*.recipe
+*.manifest
+*.res
+*.pch
+*.ipch
+
+# Visual Studio database and indexing files
+*.opendb
+*.db
+*.db-shm
+*.db-wal
