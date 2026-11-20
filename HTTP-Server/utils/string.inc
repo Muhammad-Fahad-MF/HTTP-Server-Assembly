@@ -1,347 +1,17 @@
-
-INCLUDE Irvine32.inc
-
-.data
-
-; ===============================
-; TEST DATA
-; ===============================
-
-str1 BYTE "hello", 0
-str2 BYTE "hello", 0
-str3 BYTE "HELLO", 0
-dest BYTE 50 DUP(0)
-
-memSource BYTE "COPY", 0
-memDest BYTE 20 DUP(0)
-
-memArr BYTE "abcdef", 0
-setArr BYTE 6 DUP(0)
-
-block1 BYTE "hello"
-block2 BYTE "hello"
-
-searchStr BYTE "hello world", 0
-searchWord BYTE "world", 0
-
-trimStr BYTE "   hello world   ", 0
-
-crlfStr BYTE "hello", 13, 10, 0
-crlfcrlfStr BYTE "hello", 13, 10, 13, 10, 0
-
-request BYTE "GET /index.html HTTP/1.1", 0
-
-headers1 BYTE "Host: example.com", 13, 10
-         BYTE "Content-Length: 100", 13, 10
-         BYTE 13, 10, 0
-
-headers2 BYTE "Host: example.com", 13, 10
-         BYTE "Content-Length: 100", 13, 10
-         BYTE 13, 10, 0
-
-headers3 BYTE "Host: example.com", 13, 10
-         BYTE "Content-Length: 250", 13, 10
-         BYTE 13, 10, 0
-
-headerName BYTE "Content-Length", 0
-contentName BYTE "Content-Length", 0
-
-numberStr BYTE "12345", 0
-number DWORD 12345
-numberDest BYTE 20 DUP(0)
-
-methodPtr DWORD ?
-pathPtr DWORD ?
-valuePtr DWORD ?
+; ==============================================================================
+; utils/string.inc
+; Unified collection of string, memory, and conversion procedures
+; Cleaned version: test data and test main PROC removed; 2-3 line documentation added.
+; ==============================================================================
 
 .code
 
-; =========================================
-; MAIN - CALL ALL 19 FUNCTIONS
-; =========================================
-
-main PROC
-
-; 1. StrLen
-    mov edx, OFFSET str1
-    call WriteString
-    call Crlf
-
-    push OFFSET str1
-    call StrLen
-
-    call WriteDec
-    call Crlf
-    call Crlf
-
-; 2. StrCopy
-    push OFFSET str1
-    push OFFSET dest
-    call StrCopy
-
-    mov edx, OFFSET dest
-    call WriteString
-    call Crlf
-    call Crlf
-
-; 3. StrCompare
-    push OFFSET str2
-    push OFFSET str1
-    call StrCompare
-
-    call WriteInt
-    call Crlf
-    call Crlf
-
-; 4. MemCopy
-    push 5
-    push OFFSET memSource
-    push OFFSET memDest
-    call MemCopy
-
-    mov edx, OFFSET memDest
-    call WriteString
-    call Crlf
-    call Crlf
-
-; 5. MemMove
-    push 4
-    push OFFSET memArr
-    push OFFSET memArr+2
-    call MemMove
-
-    mov edx, OFFSET memArr
-    call WriteString
-    call Crlf
-    call Crlf
-
-; 6. MemSet
-    push 5
-    push 65
-    push OFFSET setArr
-    call MemSet
-
-    mov edx, OFFSET setArr
-    call WriteString
-    call Crlf
-    call Crlf
-
-; 7. MemCompare
-    push 5
-    push OFFSET block2
-    push OFFSET block1
-    call MemCompare
-
-    call WriteInt
-    call Crlf
-    call Crlf
-
-; 8. StrFindChar
-    push 108
-    push OFFSET str1
-    call StrFindChar
-
-    cmp eax, 0
-    je Main8NotFound
-
-    mov edx, eax
-    call WriteString
-    jmp Main8Done
-
-Main8NotFound:
-    mov edx, OFFSET str1
-    call WriteString
-
-Main8Done:
-    call Crlf
-    call Crlf
-
-; 9. StrFindSubstring
-    push OFFSET searchWord
-    push OFFSET searchStr
-    call StrFindSubstring
-
-    cmp eax, 0
-    je Main9NotFound
-
-    mov edx, eax
-    call WriteString
-    jmp Main9Done
-
-Main9NotFound:
-    mov edx, OFFSET searchStr
-    call WriteString
-
-Main9Done:
-    call Crlf
-    call Crlf
-
-; 10. StrCaseCompare
-    push OFFSET str3
-    push OFFSET str1
-    call StrCaseCompare
-
-    call WriteInt
-    call Crlf
-    call Crlf
-
-; 11. StrTrim
-    push OFFSET trimStr
-    call StrTrim
-
-    mov edx, eax
-    call WriteString
-    call Crlf
-    call Crlf
-
-; 12. FindCRLF
-    push OFFSET crlfStr
-    call FindCRLF
-
-    cmp eax, 0
-    je Main12NotFound
-
-    sub eax, OFFSET crlfStr
-    call WriteDec
-    jmp Main12Done
-
-Main12NotFound:
-    mov eax, 0
-    call WriteDec
-
-Main12Done:
-    call Crlf
-    call Crlf
-
-; 13. FindCRLFCRLF
-    push OFFSET crlfcrlfStr
-    call FindCRLFCRLF
-
-    cmp eax, 0
-    je Main13NotFound
-
-    sub eax, OFFSET crlfcrlfStr
-    call WriteDec
-    jmp Main13Done
-
-Main13NotFound:
-    mov eax, 0
-    call WriteDec
-
-Main13Done:
-    call Crlf
-    call Crlf
-
-; 14. ParseRequestLine
-    push OFFSET request
-    call ParseRequestLine
-
-    mov methodPtr, eax
-    mov pathPtr, edx
-
-    mov edx, methodPtr
-    call WriteString
-    call Crlf
-
-    mov edx, pathPtr
-    call WriteString
-    call Crlf
-    call Crlf
-
-; 15. FindHeader
-    push OFFSET headerName
-    push OFFSET headers1
-    call FindHeader
-
-    cmp eax, 0
-    je Main15NotFound
-
-    sub eax, OFFSET headers1
-    call WriteDec
-    jmp Main15Done
-
-Main15NotFound:
-    mov eax, 0
-    call WriteDec
-
-Main15Done:
-    call Crlf
-    call Crlf
-
-; 16. GetHeaderValue
-    push OFFSET headerName
-    push OFFSET headers2
-    call GetHeaderValue
-
-    cmp eax, 0
-    je Main16NotFound
-
-    mov valuePtr, eax
-
-    mov esi, eax
-
-Main16FindEnd:
-    cmp BYTE PTR [esi], 13
-    je Main16Display
-
-    cmp BYTE PTR [esi], 0
-    je Main16Display
-
-    inc esi
-    jmp Main16FindEnd
-
-Main16Display:
-    mov BYTE PTR [esi], 0
-
-    mov edx, valuePtr
-    call WriteString
-
-    mov BYTE PTR [esi], 13
-    jmp Main16Done
-
-Main16NotFound:
-    mov edx, OFFSET headerName
-    call WriteString
-
-Main16Done:
-    call Crlf
-    call Crlf
-
-; 17. ParseContentLength
-    push OFFSET headers3
-    call ParseContentLength
-
-    call WriteDec
-    call Crlf
-    call Crlf
-
-; 18. StrToUInt
-    push OFFSET numberStr
-    call StrToUInt
-
-    call WriteDec
-    call Crlf
-    call Crlf
-
-; 19. UIntToStr
-    push OFFSET numberDest
-    push number
-    call UIntToStr
-
-    mov edx, OFFSET numberDest
-    call WriteString
-    call Crlf
-
-    exit
-main ENDP
-
-
-; =========================================
-; 1. StrLen
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 1. StrLen: Computes the length of a null-terminated string (excluding null byte).
+; Parameters: [ebp+8]=pStr
+; Returns: EAX = length in bytes
+; ------------------------------------------------------------------------------
 StrLen PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -352,7 +22,6 @@ StrLen PROC
 L1:
     cmp BYTE PTR [esi], 0
     je Done1
-
     inc eax
     inc esi
     jmp L1
@@ -361,16 +30,15 @@ Done1:
     pop esi
     pop ebp
     ret 4
-
 StrLen ENDP
 
 
-; =========================================
-; 2. StrCopy
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 2. StrCopy: Copies null-terminated string from pSrc to pDest including null byte.
+; Parameters: [ebp+8]=pDest, [ebp+12]=pSrc
+; Returns: EAX = pointer to pDest
+; ------------------------------------------------------------------------------
 StrCopy PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -382,29 +50,25 @@ StrCopy PROC
 L2:
     mov al, [esi]
     mov [edi], al
-
     inc esi
     inc edi
-
     cmp al, 0
     jne L2
 
     mov eax, [ebp+8]
-
     pop edi
     pop esi
     pop ebp
     ret 8
-
 StrCopy ENDP
 
 
-; =========================================
-; 3. StrCompare
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 3. StrCompare: Case-sensitive lexical comparison of two null-terminated strings.
+; Parameters: [ebp+8]=pStr1, [ebp+12]=pStr2
+; Returns: EAX = 0 if identical, -1 if pStr1 < pStr2, 1 if pStr1 > pStr2
+; ------------------------------------------------------------------------------
 StrCompare PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -446,16 +110,15 @@ Done3:
     pop esi
     pop ebp
     ret 8
-
 StrCompare ENDP
 
 
-; =========================================
-; 4. MemCopy
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 4. MemCopy: Copies count bytes from source to destination buffer.
+; Parameters: [ebp+8]=pDest, [ebp+12]=pSrc, [ebp+16]=count
+; Returns: EAX = pointer to destination buffer
+; ------------------------------------------------------------------------------
 MemCopy PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -470,22 +133,20 @@ MemCopy PROC
     rep movsb
 
     mov eax, [ebp+8]
-
     pop ecx
     pop edi
     pop esi
     pop ebp
     ret 12
-
 MemCopy ENDP
 
 
-; =========================================
-; 5. MemMove
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 5. MemMove: Safely copies count bytes handling overlapping memory regions.
+; Parameters: [ebp+8]=pDest, [ebp+12]=pSrc, [ebp+16]=count
+; Returns: EAX = pointer to destination buffer
+; ------------------------------------------------------------------------------
 MemMove PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -501,7 +162,6 @@ MemMove PROC
 
     cmp edi, esi
     je Done5
-
     jb Forward5
 
     lea eax, [esi+ecx]
@@ -510,7 +170,6 @@ MemMove PROC
 
     add esi, ecx
     add edi, ecx
-
     dec esi
     dec edi
 
@@ -525,23 +184,21 @@ Forward5:
 
 Done5:
     mov eax, [ebp+8]
-
     cld
     pop ecx
     pop edi
     pop esi
     pop ebp
     ret 12
-
 MemMove ENDP
 
 
-; =========================================
-; 6. MemSet
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 6. MemSet: Fills count bytes in destination buffer with specified byte value.
+; Parameters: [ebp+8]=pDest, [ebp+12]=val (byte), [ebp+16]=count
+; Returns: EAX = pointer to destination buffer
+; ------------------------------------------------------------------------------
 MemSet PROC
-
     push ebp
     mov ebp, esp
     push edi
@@ -555,21 +212,19 @@ MemSet PROC
     rep stosb
 
     mov eax, [ebp+8]
-
     pop ecx
     pop edi
     pop ebp
     ret 12
-
 MemSet ENDP
 
 
-; =========================================
-; 7. MemCompare
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 7. MemCompare: Compares count bytes between two memory blocks.
+; Parameters: [ebp+8]=pBuf1, [ebp+12]=pBuf2, [ebp+16]=count
+; Returns: EAX = 0 if identical, -1 if pBuf1 < pBuf2, 1 if pBuf1 > pBuf2
+; ------------------------------------------------------------------------------
 MemCompare PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -613,16 +268,15 @@ Done7:
     pop esi
     pop ebp
     ret 12
-
 MemCompare ENDP
 
 
-; =========================================
-; 8. StrFindChar
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 8. StrFindChar: Locates the first occurrence of targetChar in a string.
+; Parameters: [ebp+8]=pStr, [ebp+12]=targetChar (byte)
+; Returns: EAX = pointer to matching character, or 0 if not found
+; ------------------------------------------------------------------------------
 StrFindChar PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -632,7 +286,6 @@ StrFindChar PROC
 
 L8:
     mov al, [esi]
-
     cmp al, dl
     je Found8
 
@@ -653,16 +306,15 @@ Done8:
     pop esi
     pop ebp
     ret 8
-
 StrFindChar ENDP
 
 
-; =========================================
-; 9. StrFindSubstring
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 9. StrFindSubstring: Locates the first occurrence of substring pSub in pStr.
+; Parameters: [ebp+8]=pStr, [ebp+12]=pSub
+; Returns: EAX = pointer to beginning of substring in pStr, or 0 if not found
+; ------------------------------------------------------------------------------
 StrFindSubstring PROC
-
     push ebp
     mov ebp, esp
     push ebx
@@ -684,7 +336,6 @@ Outer9:
 
 Inner9:
     mov al, [edx]
-
     cmp al, 0
     je Found9
 
@@ -712,16 +363,15 @@ Done9:
     pop ebx
     pop ebp
     ret 8
-
 StrFindSubstring ENDP
 
 
-; =========================================
-; 10. StrCaseCompare
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 10. StrCaseCompare: Case-insensitive lexical comparison of two strings.
+; Parameters: [ebp+8]=pStr1, [ebp+12]=pStr2
+; Returns: EAX = 0 if identical, -1 if pStr1 < pStr2, 1 if pStr1 > pStr2
+; ------------------------------------------------------------------------------
 StrCaseCompare PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -777,16 +427,15 @@ Done10:
     pop esi
     pop ebp
     ret 8
-
 StrCaseCompare ENDP
 
 
-; =========================================
-; 11. StrTrim
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 11. StrTrim: Strips leading and trailing whitespace characters in-place.
+; Parameters: [ebp+8]=pStr
+; Returns: EAX = pointer to trimmed string
+; ------------------------------------------------------------------------------
 StrTrim PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -797,19 +446,14 @@ StrTrim PROC
 
 SkipStart11:
     mov al, [esi]
-
     cmp al, ' '
     je Advance11
-
     cmp al, 9
     je Advance11
-
     cmp al, 13
     je Advance11
-
     cmp al, 10
     je Advance11
-
     jmp Copy11
 
 Advance11:
@@ -819,10 +463,8 @@ Advance11:
 Copy11:
     mov al, [esi]
     mov [edi], al
-
     cmp al, 0
     je RemoveEnd11
-
     inc esi
     inc edi
     jmp Copy11
@@ -833,19 +475,14 @@ RemoveEnd11:
 
     dec edi
     mov al, [edi]
-
     cmp al, ' '
     je Remove11
-
     cmp al, 9
     je Remove11
-
     cmp al, 13
     je Remove11
-
     cmp al, 10
     je Remove11
-
     inc edi
     jmp Finish11
 
@@ -855,21 +492,19 @@ Remove11:
 
 Finish11:
     mov eax, [ebp+8]
-
     pop edi
     pop esi
     pop ebp
     ret 4
-
 StrTrim ENDP
 
 
-; =========================================
-; 12. FindCRLF
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 12. FindCRLF: Searches for the first occurrence of CRLF (13, 10).
+; Parameters: [ebp+8]=pStr
+; Returns: EAX = pointer to byte 13 of sequence, or 0 if not found
+; ------------------------------------------------------------------------------
 FindCRLF PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -879,10 +514,8 @@ FindCRLF PROC
 L12:
     cmp BYTE PTR [esi], 0
     je NotFound12
-
     cmp BYTE PTR [esi], 13
     jne Next12
-
     cmp BYTE PTR [esi+1], 10
     je Found12
 
@@ -901,16 +534,15 @@ Done12:
     pop esi
     pop ebp
     ret 4
-
 FindCRLF ENDP
 
 
-; =========================================
-; 13. FindCRLFCRLF
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 13. FindCRLFCRLF: Searches for double CRLF (13, 10, 13, 10) separating headers.
+; Parameters: [ebp+8]=pStr
+; Returns: EAX = pointer to first byte of 4-byte sequence, or 0 if not found
+; ------------------------------------------------------------------------------
 FindCRLFCRLF PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -920,16 +552,12 @@ FindCRLFCRLF PROC
 L13:
     cmp BYTE PTR [esi], 0
     je NotFound13
-
     cmp BYTE PTR [esi], 13
     jne Next13
-
     cmp BYTE PTR [esi+1], 10
     jne Next13
-
     cmp BYTE PTR [esi+2], 13
     jne Next13
-
     cmp BYTE PTR [esi+3], 10
     je Found13
 
@@ -948,16 +576,15 @@ Done13:
     pop esi
     pop ebp
     ret 4
-
 FindCRLFCRLF ENDP
 
 
-; =========================================
-; 14. ParseRequestLine
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 14. ParseRequestLine: Extracts Method and URI from an HTTP request line.
+; Parameters: [ebp+8]=pReqLine
+; Returns: EAX = pointer to Method, EDX = pointer to URI
+; ------------------------------------------------------------------------------
 ParseRequestLine PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -968,32 +595,26 @@ ParseRequestLine PROC
 L14:
     cmp BYTE PTR [esi], ' '
     je FirstSpace14
-
     cmp BYTE PTR [esi], 0
     je Invalid14
-
     inc esi
     jmp L14
 
 FirstSpace14:
     mov BYTE PTR [esi], 0
     lea edi, [esi+1]
-
     mov esi, edi
 
 L14_2:
     cmp BYTE PTR [esi], ' '
     je SecondSpace14
-
     cmp BYTE PTR [esi], 0
     je Invalid14
-
     inc esi
     jmp L14_2
 
 SecondSpace14:
     mov BYTE PTR [esi], 0
-
     mov eax, [ebp+8]
     mov edx, edi
     jmp Done14
@@ -1007,16 +628,15 @@ Done14:
     pop esi
     pop ebp
     ret 4
-
 ParseRequestLine ENDP
 
 
-; =========================================
-; 15. FindHeader
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 15. FindHeader: Searches for a specific HTTP header line by header name.
+; Parameters: [ebp+8]=pHeaders, [ebp+12]=pHeaderName
+; Returns: EAX = pointer to start of header line, or 0 if not found
+; ------------------------------------------------------------------------------
 FindHeader PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -1029,7 +649,6 @@ FindHeader PROC
 NextLine15:
     cmp BYTE PTR [esi], 0
     je NotFound15
-
     cmp BYTE PTR [esi], 13
     je NotFound15
 
@@ -1038,13 +657,10 @@ NextLine15:
 
 Compare15:
     mov al, [edx]
-
     cmp al, 0
     je CheckColon15
-
     cmp al, [ebx]
     jne SkipLine15
-
     inc ebx
     inc edx
     jmp Compare15
@@ -1056,17 +672,14 @@ CheckColon15:
 SkipLine15:
     cmp BYTE PTR [esi], 0
     je NotFound15
-
     cmp BYTE PTR [esi], 13
     je NextLineStart15
-
     inc esi
     jmp SkipLine15
 
 NextLineStart15:
     cmp BYTE PTR [esi+1], 10
     jne NotFound15
-
     add esi, 2
     jmp NextLine15
 
@@ -1083,16 +696,15 @@ Done15:
     pop esi
     pop ebp
     ret 8
-
 FindHeader ENDP
 
 
-; =========================================
-; 16. GetHeaderValue
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 16. GetHeaderValue: Extracts pointer to value of a specified HTTP header.
+; Parameters: [ebp+8]=pHeaders, [ebp+12]=pHeaderName
+; Returns: EAX = pointer to header value string (skipping colon and whitespace)
+; ------------------------------------------------------------------------------
 GetHeaderValue PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -1109,10 +721,8 @@ GetHeaderValue PROC
 L16:
     cmp BYTE PTR [esi], ':'
     je SkipSpaces16
-
     cmp BYTE PTR [esi], 0
     je NotFound16
-
     inc esi
     jmp L16
 
@@ -1122,10 +732,8 @@ SkipSpaces16:
 L16_2:
     cmp BYTE PTR [esi], ' '
     je Advance16
-
     cmp BYTE PTR [esi], 9
     je Advance16
-
     jmp Found16
 
 Advance16:
@@ -1143,22 +751,25 @@ Done16:
     pop esi
     pop ebp
     ret 8
-
 GetHeaderValue ENDP
 
 
-; =========================================
-; 17. ParseContentLength
-; =========================================
+; ------------------------------------------------------------------------------
+; 17. ParseContentLength: Parses numeric value of Content-Length header.
+; Parameters: [ebp+8]=pHeaders
+; Returns: EAX = integer content length, or 0 if not present
+; ------------------------------------------------------------------------------
+.data
+contentName_str BYTE "Content-Length", 0
+.code
 
 ParseContentLength PROC
-
     push ebp
     mov ebp, esp
     push esi
     push ebx
 
-    push OFFSET contentName
+    push OFFSET contentName_str
     push DWORD PTR [ebp+8]
     call GetHeaderValue
 
@@ -1170,15 +781,12 @@ ParseContentLength PROC
 
 L17:
     mov bl, [esi]
-
     cmp bl, '0'
     jb Done17
-
     cmp bl, '9'
     ja Done17
 
     sub bl, '0'
-
     imul eax, 10
     movzx ebx, bl
     add eax, ebx
@@ -1194,16 +802,15 @@ Done17:
     pop esi
     pop ebp
     ret 4
-
 ParseContentLength ENDP
 
 
-; =========================================
-; 18. StrToUInt
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 18. StrToUInt: Parses an unsigned 32-bit integer from an ASCII string.
+; Parameters: [ebp+8]=pStr
+; Returns: EAX = parsed unsigned integer
+; ------------------------------------------------------------------------------
 StrToUInt PROC
-
     push ebp
     mov ebp, esp
     push esi
@@ -1214,18 +821,14 @@ StrToUInt PROC
 
 L18:
     mov bl, [esi]
-
     cmp bl, 0
     je Done18
-
     cmp bl, '0'
     jb Invalid18
-
     cmp bl, '9'
     ja Invalid18
 
     sub bl, '0'
-
     imul eax, 10
     movzx ebx, bl
     add eax, ebx
@@ -1241,16 +844,15 @@ Done18:
     pop esi
     pop ebp
     ret 4
-
 StrToUInt ENDP
 
 
-; =========================================
-; 19. UIntToStr
-; =========================================
-
+; ------------------------------------------------------------------------------
+; 19. UIntToStr: Converts an unsigned integer to a null-terminated ASCII string.
+; Parameters: [ebp+8]=val, [ebp+12]=pDest
+; Returns: EAX = pointer to destination buffer
+; ------------------------------------------------------------------------------
 UIntToStr PROC
-
     push ebp
     mov ebp, esp
     push ebx
@@ -1268,17 +870,14 @@ UIntToStr PROC
 
     mov BYTE PTR [edi], '0'
     mov BYTE PTR [edi+1], 0
-
     mov eax, [ebp+12]
     jmp Done19
 
 Divide19:
     xor edx, edx
     div ebx
-
     push edx
     inc ecx
-
     cmp eax, 0
     jne Divide19
 
@@ -1286,12 +885,10 @@ Write19:
     pop edx
     add dl, '0'
     mov [edi], dl
-
     inc edi
     loop Write19
 
     mov BYTE PTR [edi], 0
-
     mov eax, [ebp+12]
 
 Done19:
@@ -1300,8 +897,4 @@ Done19:
     pop ebx
     pop ebp
     ret 8
-
 UIntToStr ENDP
-
-
-END main

@@ -83,7 +83,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Irvine</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Irvine32.lib; Kernel32.lib; User32.lib;</AdditionalDependencies>
+      <AdditionalDependencies>Irvine32.lib; Kernel32.lib; User32.lib; ws2_32.lib;</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
@@ -106,7 +106,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Irvine</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Irvine32.lib; Kernel32.lib; User32.lib;</AdditionalDependencies>
+      <AdditionalDependencies>Irvine32.lib; Kernel32.lib; User32.lib; ws2_32.lib;</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
