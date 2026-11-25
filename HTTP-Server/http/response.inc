@@ -10,7 +10,9 @@
     szHdr_Connection    BYTE 13, 10, "Connection: close", 13, 10, 13, 10, 0
 
     szStatus200         BYTE "200 OK", 0
+    szStatus400         BYTE "400 Bad Request", 0
     szStatus404         BYTE "404 Not Found", 0
+    szStatus405         BYTE "405 Method Not Allowed", 0
 
     szTypeHtml          BYTE "text/html", 0
     szTypeCss           BYTE "text/css", 0
@@ -55,6 +57,18 @@
                         BYTE "<body style='font-family:sans-serif; text-align:center; padding-top:50px;'>", 13, 10
                         BYTE "<h1 style='color:#e74c3c;'>404 - File Not Found</h1>", 13, 10
                         BYTE "<p>The requested file does not exist on this COAL x86 HTTP server.</p>", 13, 10
+                        BYTE "<hr/><small>MASM HTTP Server &copy; COAL Project</small></body></html>", 0
+
+    szBody400           BYTE "<!DOCTYPE html><html><head><title>400 Bad Request</title></head>", 13, 10
+                        BYTE "<body style='font-family:sans-serif; text-align:center; padding-top:50px;'>", 13, 10
+                        BYTE "<h1 style='color:#e67e22;'>400 - Bad Request</h1>", 13, 10
+                        BYTE "<p>The request could not be parsed by this COAL HTTP server.</p>", 13, 10
+                        BYTE "<hr/><small>MASM HTTP Server &copy; COAL Project</small></body></html>", 0
+
+    szBody405           BYTE "<!DOCTYPE html><html><head><title>405 Method Not Allowed</title></head>", 13, 10
+                        BYTE "<body style='font-family:sans-serif; text-align:center; padding-top:50px;'>", 13, 10
+                        BYTE "<h1 style='color:#e67e22;'>405 - Method Not Allowed</h1>", 13, 10
+                        BYTE "<p>The requested HTTP method is not supported by this server.</p>", 13, 10
                         BYTE "<hr/><small>MASM HTTP Server &copy; COAL Project</small></body></html>", 0
 
     g_headerBuffer      BYTE 1024 DUP(0)
@@ -215,6 +229,54 @@ Send404Response PROC
     pop ebp
     ret 4
 Send404Response ENDP
+
+
+; ------------------------------------------------------------------------------
+; Send400Response: Sends an HTTP 400 Bad Request error page for malformed input.
+; Parameters: [ebp+8]=clientSocket
+; Returns: EAX = total bytes sent
+; ------------------------------------------------------------------------------
+Send400Response PROC
+    push ebp
+    mov ebp, esp
+
+    push OFFSET szBody400
+    call StrLen
+
+    push eax                           ; bodyLen
+    push OFFSET szBody400              ; pBody
+    push OFFSET szTypeHtml             ; Content-Type
+    push OFFSET szStatus400            ; Status 400 Bad Request
+    push DWORD PTR [ebp+8]             ; clientSocket
+    call SendHttpResponse
+
+    pop ebp
+    ret 4
+Send400Response ENDP
+
+
+; ------------------------------------------------------------------------------
+; Send405Response: Sends an HTTP 405 Method Not Allowed error page.
+; Parameters: [ebp+8]=clientSocket
+; Returns: EAX = total bytes sent
+; ------------------------------------------------------------------------------
+Send405Response PROC
+    push ebp
+    mov ebp, esp
+
+    push OFFSET szBody405
+    call StrLen
+
+    push eax                           ; bodyLen
+    push OFFSET szBody405              ; pBody
+    push OFFSET szTypeHtml             ; Content-Type
+    push OFFSET szStatus405            ; Status 405 Method Not Allowed
+    push DWORD PTR [ebp+8]             ; clientSocket
+    call SendHttpResponse
+
+    pop ebp
+    ret 4
+Send405Response ENDP
 
 
 ; ------------------------------------------------------------------------------

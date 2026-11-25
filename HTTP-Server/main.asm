@@ -146,9 +146,9 @@ RouteRequest PROC
     cmp eax, 0
     je HandleGetRoute
 
-    ; 3. Unsupported method -> Return 404
+    ; 3. Unsupported method -> Return 405 Method Not Allowed
     push DWORD PTR [ebp+8]
-    call Send404Response
+    call Send405Response
     xor eax, eax
     jmp RouteDone
 
@@ -296,7 +296,7 @@ HandleMalformedClientRequest:
     call SetTextColor
 
     push g_clientSocket
-    call Send404Response
+    call Send400Response
 
 CloseClientConnection:
     ; G. Close client socket cleanly
